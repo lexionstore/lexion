@@ -22,18 +22,17 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-export default function AdminDashboard() {
+export default function AdminPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState({ name: '', price: '', description: '', category: '', tags: '', image: null, preview: '', id: '' });
   const [password, setPassword] = useState('');
 
-  // ✅ 비밀번호 직접 지정
   const envPassword = "lexion123";
 
   useEffect(() => {
+    if (!isLoggedIn) return;
     const fetchProducts = async () => {
-      if (!isLoggedIn) return;
       const querySnapshot = await getDocs(collection(db, 'products'));
       const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setProducts(data);
