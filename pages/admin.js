@@ -5,8 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc
+} from 'firebase/firestore';
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAJ2Cd9LPmbyTBZotqOPjoZoI_I4k2M_00",
@@ -25,18 +38,31 @@ const storage = getStorage(app);
 export default function AdminDashboard() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ name: '', price: '', description: '', category: '', tags: '', image: null, preview: '', id: '' });
+  const [form, setForm] = useState({
+    name: '',
+    price: '',
+    description: '',
+    category: '',
+    tags: '',
+    image: null,
+    preview: '',
+    id: ''
+  });
   const [password, setPassword] = useState('');
   const [envPassword, setEnvPassword] = useState(null);
 
   useEffect(() => {
     setEnvPassword(process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
   }, []);
+
   useEffect(() => {
     if (!isLoggedIn) return;
     const fetchProducts = async () => {
       const querySnapshot = await getDocs(collection(db, 'products'));
-      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const data = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
       setProducts(data);
     };
     fetchProducts();
@@ -53,8 +79,41 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleAddOrUpdateProduct = async () => {
-    if (!form.name || !form.price || !form.description || !form.image) return alert('모든 항목을 입력하세요');
+  const handleLogin = () => {
+    if (!envPassword) {
+      alert("환경변수를 아직 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+    if (password === envPassword) {
+      setIsLoggedIn(true);
+    } else {
+      alert("비밀번호가 틀렸습니다.");
+    }
+  };
+
+  if (!envPassword) {
+    return <p className="p-6 text-center text-gray-500">환경변수를 불러오는 중입니다...</p>;
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="p-6 max-w-sm mx-auto">
+        <h2 className="text-xl font-semibold mb-4">관리자 로그인</h2>
+        <Label htmlFor="password">비밀번호</Label>
+        <Input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="비밀번호 입력"
+        />
+        <Button className="mt-4" onClick={handleLogin}>
+          로그인
+        </Button>
+      </div>  const handleAddOrUpdateProduct = async () => {
+    if (!form.name || !form.price || !form.description || !form.image) {
+      return alert('모든 항목을 입력하세요');
+    }
 
     let imageUrl = form.preview;
     if (form.image && typeof form.image !== 'string') {
@@ -81,7 +140,16 @@ export default function AdminDashboard() {
       setProducts([...products, { id: docRef.id, ...newProduct }]);
     }
 
-    setForm({ name: '', price: '', description: '', category: '', tags: '', image: null, preview: '', id: '' });
+    setForm({
+      name: '',
+      price: '',
+      description: '',
+      category: '',
+      tags: '',
+      image: null,
+      preview: '',
+      id: ''
+    });
   };
 
   const handleDeleteProduct = async (id) => {
@@ -92,35 +160,6 @@ export default function AdminDashboard() {
   const handleEditProduct = (product) => {
     setForm({ ...product, preview: product.imageUrl, image: '' });
   };
-
-  const handleLogin = () => {
-    if (!envPassword) {
-      alert("환경변수를 아직 불러오는 중입니다. 잠시 후 시도해주세요.");
-      return;
-    }
-    if (password === envPassword) setIsLoggedIn(true);
-    else alert('비밀번호가 틀렸습니다.');
-  };
-  if (!envPassword) {
-    return <p className="p-6 text-center text-gray-500">환경변수를 불러오는 중입니다...</p>;
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <div className="p-6 max-w-sm mx-auto">
-        <h2 className="text-xl font-semibold mb-4">관리자 로그인</h2>
-        <Label htmlFor="password">비밀번호</Label>
-        <Input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="비밀번호 입력"
-        />
-        <Button className="mt-4" onClick={handleLogin}>로그인</Button>
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 space-y-6">
@@ -153,25 +192,7 @@ export default function AdminDashboard() {
                   <p>{product.price} KRW</p>
                   <p className="text-sm text-gray-600">{product.description}</p>
                   <p className="text-sm">카테고리: {product.category}</p>
-                  <p className="text-sm text-gray-500">태그: {product.tags}</p>
-                  {product.imageUrl && <img src={product.imageUrl} alt="" className="w-32 mt-2" />}
-                  <div className="flex gap-2 mt-2">
-                    <Button variant="secondary" onClick={() => handleEditProduct(product)}>수정</Button>
-                    <Button variant="destructive" onClick={() => handleDeleteProduct(product.id)}>삭제</Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+                  <p className="text-sm text-gray-500">태그: {product.tags
 
-      <Card>
-        <CardContent>
-          <h2 className="text-xl font-semibold">📦 주문 / 고객 관리 (예정)</h2>
-          <p className="text-gray-500">이곳에 향후 주문 내역 및 고객 정보 관리 기능이 추가될 예정입니다.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+    );
+  }
